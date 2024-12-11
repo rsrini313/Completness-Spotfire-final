@@ -1,0 +1,85 @@
+
+ SELECT DISTINCT
+   V1."SRC_UPDT_TS" AS "SRCUPDTTS",
+   V1."STDY_ID" AS "STDYID",
+   V1."GEOG_KEY" AS "GEOGKEY",
+   V1."STDY_SITE_KEY" AS "STDYSITEKEY",
+   V1."STDY_SITE_NBR" AS "STDYSITENBR",
+   V1."STDY_ITEM_STAT" AS "STDYITEMSTAT",
+   V1."ITEM_STAT" AS "ITEMSTAT",
+   V1."REF_MODEL_ID" AS "REFMODELID",
+   V1."DOC_GRP" AS "DOCGRP",
+   V1."DOC_DT" AS "DOCDT",
+   V1."DOC_VERS" AS "DOCVERS",
+   V1."DOC_FINAL_DT" AS "DOCFINALDT",
+   V1."DOC_STAT" AS "DOCSTAT",
+   V1."DOC_DUE_DT" AS "DOCDUEDT",
+   V1."URL_ID" AS "URLID",
+   V1."RSN_FULF" AS "RSNFULF",
+   V1."EXPRY_DT" AS "EXPRYDT",
+   V1."FINAL_NM" AS "FINALNM",
+   V1."DOC_TYP_ID" AS "DOCTYPID",
+   V1."DOC_CLAS" AS "DOCCLAS",
+   V1."DOC_SUBMIT_QID" AS "DOCSUBMITQID",
+   V1."DOC_OWN" AS "DOCOWN",
+   V1."DOC_OWN_QID" AS "DOCOWNQID",   
+   V1."DOC_SUBMITR" AS "DOCSUBMITR",
+   V1."DOC_TRK_ID" AS "DOCTRKID",
+   V1."DOC_TYP" AS "DOCTYP1",
+   V1."DOC_DESC" AS "DOCDESC",
+   V1."DOC_BASE_ID" AS "DOCBASEID",
+   V1."CTRY_CD" AS "CTRYCD",
+   V1."PAST_DUE_IND" AS "PASTDUEIND",
+   V1."DAYS_30_FINALIZATION_IND" AS "DAYS30FINALIZATIONIND",
+   V2."BLIND_UNBLIND_IND" AS "BLINDUNBLINDIND",
+   V2."DOC_NM" AS "DOCNM",
+   V2."ORG_DOC_REL" AS "ORGDOCREL",
+   V2."STDY_ITEM_URL" AS "STDYITEMURL",
+   V1."SRC_SYS_NM" AS "SRCSYSNM",
+   V1."RSN_NOT_FULF" AS "RSNNOTFULF",
+   V1."DOC_RCPT_DT" AS "DOCRCPTDT",
+   V1."DOC_UPLDED_DT" AS "DOCUPLDEDDT",
+   V2."STDY_ITEM_NM" AS "STDYITEMNM",
+ Substr(V1."DOC_OWN_QID",2) as "DOC_OWN_EMP_ID",
+Case 
+WHEN V1.ITEM_STAT in ('Pending', 'Unfulfilled', 'Proposed') and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))>=0  and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))<30 then 'Due in <30 Days'         
+WHEN V1.ITEM_STAT in ('Pending', 'Unfulfilled', 'Proposed') and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))>=30 and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))<60 then 'Due in <60 Days'         
+WHEN V1.ITEM_STAT in ('Pending', 'Unfulfilled', 'Proposed') and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))>=60 and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))<90 then 'Due in <90 Days'         
+WHEN V1.ITEM_STAT in ('Pending', 'Unfulfilled', 'Proposed') and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))>=90 then 'Due in >90 Days'         
+WHEN V1.ITEM_STAT in ('Pending', 'Unfulfilled', 'Proposed') and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE()))) <0  and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE()))>= ROUND(ADD_MONTHS(DATE(SYSDATE()),-6) - DATE(SYSDATE())))  then '<= 6 Mo Past Due'        
+WHEN V1.ITEM_STAT in ('Pending', 'Unfulfilled', 'Proposed') and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))<0 and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE()))) < ROUND(ADD_MONTHS(DATE(SYSDATE()),-6) - DATE(SYSDATE())) then '> 6 Mo Past Due'         
+WHEN V1.ITEM_STAT in ('Pending', 'Unfulfilled', 'Proposed') and V1.DOC_DUE_DT is null then null end as "Due Date Time",
+CASE WHEN V1.ITEM_STAT IN ('Fulfilled', 'Fulfilled with Reason') THEN 'Fulfilled'
+WHEN V1.ITEM_STAT IN ('Pending','Proposed') THEN 'Pending'
+WHEN V1.ITEM_STAT = 'Unfulfilled' then 'Unfulfilled'
+END AS STATUS
+ 
+     FROM
+   "VW_DOC_TRK_FACT" V1
+   inner join "VW_DOC_DIM" V2 on V2."DOC_KEY" = V1."DOC_KEY" AND V1."ITEM_STAT" in ('Fulfilled','Fulfilled with Reason','Pending','Proposed','Unfulfilled') AND  V1."IBR_FLG"  ='TMF' 
+  AND  (V1.DOC_STAT NOT IN ('Obsolete','Superseded','Cancelled') or DOC_STAT is null) and  V2."VRTLLY_DEL_IND"='0' and V1."SRC_SYS_NM"='WINGSPAN'
+AND ( (V1."PAST_DUE_IND"='Past Due' )        OR 
+ ( Case 
+WHEN V1.ITEM_STAT in ('Pending', 'Unfulfilled', 'Proposed') and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))>=0  and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))<30 then 'Due in <30 Days'         
+WHEN V1.ITEM_STAT in ('Pending', 'Unfulfilled', 'Proposed') and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))>=30 and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))<60 then 'Due in <60 Days'         
+WHEN V1.ITEM_STAT in ('Pending', 'Unfulfilled', 'Proposed') and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))>=60 and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))<90 then 'Due in <90 Days'         
+WHEN V1.ITEM_STAT in ('Pending', 'Unfulfilled', 'Proposed') and  (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))>=90 then 'Due in >90 Days'         
+WHEN V1.ITEM_STAT in ('Pending', 'Unfulfilled', 'Proposed') and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE()))) <0  and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE()))>= ROUND(ADD_MONTHS(DATE(SYSDATE()),-6) - DATE(SYSDATE())))  then '<= 6 Mo Past Due'        
+WHEN V1.ITEM_STAT in ('Pending', 'Unfulfilled', 'Proposed') and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))<0 and (ROUND(DATE(V1.DOC_DUE_DT)- DATE(SYSDATE())))< ROUND(ADD_MONTHS(DATE(SYSDATE()),-6) - DATE(SYSDATE())) then '> 6 Mo Past Due'         
+WHEN V1.ITEM_STAT in ('Pending', 'Unfulfilled', 'Proposed') and V1.DOC_DUE_DT is null then null end)IS NOT NULL)
+
+INNER JOIN  "VW_STDY_DIM" V3 ON 
+V3."STDY_ID" = V1."STDY_ID" AND V3.STDY_STAT not in ('Completed','Discontinued','Proposed') 
+INNER JOIN "VW_GEOG_DIM" V4 ON (V1."GEOG_KEY" = V4."GEOG_KEY" )
+WHERE   
+(V3.stdy_id in (?ProtocolNumberList) or 'All' in (?ProtocolNumberList))
+AND ( V3.sponsr_nm IN (?sponsors) OR 'All' in (?sponsors) )
+AND ( V3.par_cust_nm IN (?parentCustomer) OR 'All' in (?parentCustomer))
+AND ( V3.pri_thptc_area IN (?therapeuticAreas) OR 'All' in (?therapeuticAreas) )
+AND ( V3.pri_svc_ln_nm in (?qrpmserviceline) OR 'All' in (?qrpmserviceline) )
+AND ( V3.stdy_stat IN (?studyStatuses) OR 'All' in (?studyStatuses) )
+AND ( V3.stdy_unit IN (?studyUnit)  OR 'All' in (?studyUnit))
+AND (V3.pri_indctn IN (?primaryindication) OR 'All' in (?primaryindication))
+AND (V3.stdy_id IN (?protocolNumber) OR 'All' in (?protocolNumber) )
+AND (V4.REGION IN (?region) OR 'All' in (?region))
+AND (V4.STD_CTRY_NM IN (?country) OR  'All' in (?country)) 

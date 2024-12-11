@@ -1,0 +1,8 @@
+SELECT Distinct
+   V1."GEOG_KEY" AS "GEOGKEY",
+   V1."STDY_STAT" AS "STDYSTAT",
+   V1."STDY_ID" AS "STDYID"
+FROM
+   "RDSCDASDF"."S_CARPT"."VW_STDY_CTRY_STAT_FACT" V1
+WHERE
+   (V1.stdy_id in (?ProtocolNumberList) or 'All' in (?ProtocolNumberList))

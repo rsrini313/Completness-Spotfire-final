@@ -1,0 +1,56 @@
+SELECT 
+   V1."STDY_KEY" AS "STDYKEY",
+   V1."STDY_ID" AS "STDYID",
+   V1."DTE_STDY_FLG" AS "DTESTDYFLG",
+   V1."PAR_CUST_NM" AS "PARCUSTNM",
+   V1."SPONSR_NM" AS "SPONSRNM",
+   V1."PRI_INDCTN" AS "PRIINDCTN",
+   V1."PRI_SVC_LN_NM" AS "PRISVCLNNM",
+   V1."PRI_THPTC_AREA" AS "PRITHPTCAREA",
+   V1."STDY_OWN" AS "STDYOWN",
+   V1."STDY_STAT" AS "STDYSTAT",
+   V1."SUB_UNIT_NM" AS "SUBUNITNM",
+   V2."GEOG_KEY" AS "GEOGKEY",
+    V2."INVSTGTR_FIRST_NM" || ' ' || V2."INVSTGTR_LAST_NM" AS "Investigator Name",
+      V2."STDY_SITE_KEY" AS "STDYSITEKEY",
+   V2."STDY_SITE_NBR" AS "STDYSITENBR",
+   V2."STDY_SITE_NM" AS "STDYSITENM",
+   V2."STDY_SITE_STAT" AS "STDYSITESTAT",
+   LISTAGG(DISTINCT  V3."PROJ_CD", ',') AS "PROJCD",
+   V1."STDY_UNIT" AS "STDYUNIT"
+FROM
+"VW_STDY_DIM" V1
+INNER JOIN VW_STDY_PROJ_DIM V3 ON V1.STDY_KEY = V3.STDY_KEY 
+LEFT JOIN VW_STDY_SITE_DIM V2 ON V1.STDY_KEY = V2.STDY_KEY 
+WHERE V3.ISS_PRI_SRC_SYS_NM IN ('CTMS', 'INNTRAX','NOVIL2')
+and 
+  V1.STDY_STAT not in ('Completed','Discontinued','Proposed')
+   and (V1.stdy_id in (?ProtocolNumberList) or 'All' in (?ProtocolNumberList))
+AND ( V1.sponsr_nm IN (?sponsors) OR 'All' in (?sponsors) )
+AND ( V1.par_cust_nm IN (?parentCustomer) OR 'All' in (?parentCustomer))
+AND ( V1.pri_thptc_area IN (?therapeuticAreas) OR 'All' in (?therapeuticAreas) )
+AND ( V1.pri_svc_ln_nm in (?qrpmserviceline) OR 'All' in (?qrpmserviceline) )
+AND ( V1.stdy_stat IN (?studyStatuses) OR 'All' in (?studyStatuses) )
+AND ( V1.stdy_unit IN (?studyUnit)  OR 'All' in (?studyUnit))
+AND (V1.pri_indctn IN (?primaryindication) OR 'All' in (?primaryindication))
+AND (V1.stdy_id IN (?protocolNumber) OR 'All' in (?protocolNumber) )
+
+GROUP BY 
+ V1."STDY_KEY",
+   V1."STDY_ID",
+   V1."DTE_STDY_FLG",
+   V1."PAR_CUST_NM",
+   V1."SPONSR_NM",
+   V1."PRI_INDCTN",
+   V1."PRI_SVC_LN_NM",
+   V1."PRI_THPTC_AREA",
+   V1."STDY_OWN",
+   V1."STDY_STAT",
+   V1."SUB_UNIT_NM",
+   V2."GEOG_KEY",
+    V2."INVSTGTR_FIRST_NM" || ' ' || V2."INVSTGTR_LAST_NM",
+      V2."STDY_SITE_KEY",
+   V2."STDY_SITE_NBR",
+   V2."STDY_SITE_NM",
+   V2."STDY_SITE_STAT",
+   V1."STDY_UNIT"
