@@ -1,0 +1,16 @@
+-- Second record
+select a.* from Output_view a join
+(select Protocol, document_ID, min(order_number) second_row from review_fact where screen in ('In Workspace') and reviewer_name is not null) b
+where a.protocol=b.protocol and a.document_ID=b.document_ID and a.order_number=b.second_row
+ 
+union all
+ 
+-- Last row (finalized in wingspan)
+select a.* from Output_view a where screen='Finalized in wingspan'
+ 
+union all
+ 
+--all the reject criterias
+select a.* from Output_view a join
+(select Protocol, document_ID, reject_criteria, reject_comments, reviewer_name, min(order_number) reject_scenarious from review_fact where screen in ('Rejected') and reviewer_name is not null) b
+where a.protocol=b.protocol and a.document_ID=b.document_ID and a.order_number=b.reject_scenarious
